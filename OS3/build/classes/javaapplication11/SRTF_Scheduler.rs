@@ -1,2 +1,0 @@
-javaapplication11.Process
-javaapplication11.SRTF_Scheduler

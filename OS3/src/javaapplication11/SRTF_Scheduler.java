@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
  */
 package javaapplication11;
-       import java.util.*;
+import java.util.*;
 
 class Process {
     int id, arrivalTime, burstTime, remainingTime, completionTime, turnaroundTime, waitingTime;
@@ -17,42 +17,48 @@ class Process {
 }
 
 public class SRTF_Scheduler {
+    
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Enter number of processes: ");
+        System.out.print("Number of processes = ");
         int n = scanner.nextInt();
         List<Process> processes = new ArrayList<>();
 
         for (int i = 0; i < n; i++) {
-            System.out.print("Enter arrival time and burst time for P" + (i + 1) + ": ");
+            System.out.print("P" + (i + 1) + ": Arrival time = ");
             int arrival = scanner.nextInt();
+            System.out.print("P" + (i + 1) + ": Burst time = ");
             int burst = scanner.nextInt();
             processes.add(new Process(i + 1, arrival, burst));
         }
+        System.out.println("Scheduling Algorithm: Shortest remaining time first");
+        System.out.println("Context Switch: 1 ms");
 
         scheduleProcesses(processes);
-        scanner.close();
     }
 
     public static void scheduleProcesses(List<Process> processes) {
-        int n = processes.size(), currentTime = 0, completed = 0, totalIdleTime = 0;
-        boolean[] isCompleted = new boolean[n];
+        
+        int n = processes.size();
+        int currentTime = 0;
+        int completed = 0;
+        int totalIdleTime = 0;        
         List<String> ganttChart = new ArrayList<>();
-        PriorityQueue<Process> pq = new PriorityQueue<>((a, b) -> a.remainingTime != b.remainingTime ? a.remainingTime - b.remainingTime : a.arrivalTime - b.arrivalTime);
+        Queue<Process> queue = new LinkedList<>();
         Process lastProcess = null;
         int startTime = 0;
 
         while (completed < n) {
             for (Process p : processes) {
-                if (!isCompleted[p.id - 1] && p.arrivalTime <= currentTime && !pq.contains(p)) {
-                    pq.add(p);
+                if (p.arrivalTime <= currentTime && p.remainingTime > 0 && !queue.contains(p)) {
+                    queue.add(p);
                 }
             }
 
-            if (pq.isEmpty()) {
+            if (queue.isEmpty()) {
                 if (lastProcess != null) {
-                    ganttChart.add(startTime + "-" + currentTime + " P" + lastProcess.id);
+                    ganttChart.add(startTime + "-" + currentTime + "    P" + lastProcess.id);
                 }
                 ganttChart.add(currentTime + "-" + (currentTime + 1) + " IDLE");
                 totalIdleTime++;
@@ -62,40 +68,53 @@ public class SRTF_Scheduler {
                 continue;
             }
 
-            Process currentProcess = pq.poll();
+            // Find the process with the shortest remaining time
+            Process currentProcess = findShortestRemainingTime(queue);
+
             if (lastProcess != null && lastProcess.id != currentProcess.id) {
-                ganttChart.add(startTime + "-" + currentTime + " P" + lastProcess.id);
-                ganttChart.add(currentTime + "-" + (currentTime + 1) + " CS");
+                ganttChart.add(startTime + "-" + currentTime + "    P" + lastProcess.id);
+                ganttChart.add(currentTime + "-" + (currentTime + 1) + "    CS");
                 totalIdleTime++;
                 currentTime++;
                 startTime = currentTime;
             }
 
+            // Process execution (1 time unit)
             currentProcess.remainingTime--;
             currentTime++;
 
             if (currentProcess.remainingTime == 0) {
                 currentProcess.completionTime = currentTime;
-                isCompleted[currentProcess.id - 1] = true;
                 completed++;
-            } else {
-                pq.add(currentProcess);
+                queue.remove(currentProcess); // Remove from queue when done
             }
 
             lastProcess = currentProcess;
         }
 
         if (lastProcess != null) {
-            ganttChart.add(startTime + "-" + currentTime + " P" + lastProcess.id);
+            ganttChart.add(startTime + "-" + currentTime + "    P" + lastProcess.id);
         }
 
         printResults(processes, ganttChart, totalIdleTime, currentTime);
     }
 
+    // **Method to Find the Process with the Shortest Remaining Time**
+    public static Process findShortestRemainingTime(Queue<Process> queue) {
+        Process shortest = null;
+        for (Process p : queue) {
+            if (shortest == null || p.remainingTime < shortest.remainingTime || 
+                (p.remainingTime == shortest.remainingTime && p.arrivalTime < shortest.arrivalTime)) {
+                shortest = p;
+            }
+        }
+        return shortest;
+    }
+
     public static void printResults(List<Process> processes, List<String> ganttChart, int totalIdleTime, int totalTime) {
         double totalTAT = 0, totalWT = 0;
 
-        System.out.println("\nExecution Timeline (Gantt Chart):");
+        System.out.println("Time   Process/CS");
         for (String entry : ganttChart) {
             System.out.println(entry);
         }
@@ -116,16 +135,7 @@ public class SRTF_Scheduler {
         System.out.printf("Average Turnaround Time: %.2f\n", avgTAT);
         System.out.printf("Average Waiting Time: %.2f\n", avgWT);
         System.out.printf("CPU Utilization: %.2f%%\n", cpuUtilization);
-       
-// Printing additional Gantt Chart without time
-        System.out.println("\nFinal Gantt Chart");
-        System.out.print("|");
-        for (String entry : ganttChart) {
-            String formattedEntry = entry.replaceAll("\\d+-\\d+ ", ""); // Remove time ranges
-            System.out.print(" " + formattedEntry + " | ");
-        }
         System.out.println();
-   
+    
     }
-   
 }
