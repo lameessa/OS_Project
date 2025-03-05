@@ -99,7 +99,7 @@ public class SRTF_Scheduler {
         printResults(processes, ganttChart, totalIdleTime, currentTime);
     }
 
-    // **Method to Find the Process with the Shortest Remaining Time**
+    // Method to Find the Process with the Shortest Remaining Time
     public static Process findShortestRemainingTime(Queue<Process> queue) {
         Process shortest = null;
         for (Process p : queue) {
