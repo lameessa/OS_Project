@@ -70,7 +70,16 @@ public class MemoryFragmentationSimulation {
     }
 
     public void allocateMemory(String processID, int processSize) {
+        
+        for (MemoryBlock block : memoryBlocks) {
+    if (block.processID.equals(processID)) {
+        System.out.println("Error: Process ID " + processID + " is already in use.");
+        return;
+    }
+}
+
         MemoryBlock targetBlock = null;
+        
         
         switch (allocationStrategy) {
             case 1: // First-Fit
